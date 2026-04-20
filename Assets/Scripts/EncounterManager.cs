@@ -24,7 +24,7 @@ public class EncounterManager : MonoBehaviour
     public Transform enemySpawnPoint;
 
     [Header("Player Attack Scaling")]
-    [Tooltip("Max damage at full wind-back. Scales down linearly to 0 at minimum drag.")]
+    [Tooltip("Max damage at full wind-back. Scales down linearly to PlayerStats.MinDamage at minimum drag.")]
     [SerializeField] private int baseDamage = 10;
 
     [Header("Timing")]
@@ -44,6 +44,7 @@ public class EncounterManager : MonoBehaviour
     // ── Private ────────────────────────────────────────────────────
 
     private int             currentEnemyIndex;
+    private int             strokesAtShot;
     private Enemy[]         spawnedEnemies;
     public  Enemy[]         SpawnedEnemies => spawnedEnemies;
 
@@ -185,8 +186,8 @@ public class EncounterManager : MonoBehaviour
     {
         if (State != EncounterState.PlayerTurn) return;
 
+        strokesAtShot = StrokesRemaining;
         StrokesUsed++;
-        MultiplierDisplay.Instance?.Refresh();
         TransitionTo(EncounterState.BallRolling);
     }
 
@@ -234,8 +235,8 @@ public class EncounterManager : MonoBehaviour
     {
         var   ps         = PlayerStats.Instance;
         float shotPower  = currentShooter != null ? currentShooter.LastShotPower : 1f;
-        int   rawBase    = Mathf.RoundToInt(baseDamage * shotPower);
-        int   multiplier = Mathf.Max(1, StrokesRemaining);
+        int   rawBase    = Mathf.Max(ps.MinDamage, Mathf.RoundToInt(baseDamage * shotPower));
+        int   multiplier = Mathf.Max(1, strokesAtShot);
         int   scaled     = rawBase * multiplier;
         int   bankBonus  = (currentShooter != null && currentShooter.HitObstacle) ? ps.BankShotDamageBonus : 0;
         int   damage     = scaled + ps.DamageBonus + bankBonus;
@@ -252,8 +253,7 @@ public class EncounterManager : MonoBehaviour
         if (bankBonus > 0) DebugHUD.Log($"Bank shot! +{bankBonus} bonus damage.");
         DebugHUD.Log($"Player deals {damage} damage.");
         CurrentEnemy.TakeDamage(damage);
-
-        // TODO: damage popup / hit flash
+        AttackDisplay.Instance?.Show(LastAttack);
 
         yield return new WaitForSeconds(betweenActionsDelay);
         TransitionTo(EncounterState.EnemyTurn);

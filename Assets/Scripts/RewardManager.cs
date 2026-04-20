@@ -93,6 +93,9 @@ switch (reward.type)
             case RewardType.BankShotBonus:
                 PlayerStats.Instance.AddBankShotBonus(reward.value);
                 break;
+            case RewardType.HealPlayer:
+                PlayerStats.Instance.Heal(reward.value);
+                break;
         }
     }
 

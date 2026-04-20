@@ -82,7 +82,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43471814b3a138348b19cbc126fa9ee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GolfHole
-  detectionTolerance: 0.11
+  detectionTolerance: 0.14
 --- !u!212 &3787890161894188168
 SpriteRenderer:
   serializedVersion: 2

@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f41be9a8e7b78e44b6e326ccd2a6fae, type: 3}
-  m_Name: StrokeBonus
+  m_Name: HPBonus
   m_EditorClassIdentifier: Assembly-CSharp::RewardDefinition
-  displayName: Extra Stroke Bonus
-  description: Get Extra Strokes!
-  type: 1
-  value: 1
+  displayName: Regain HP
+  description: Gain a small amount of health back
+  type: 3
+  value: 30

@@ -183,6 +183,7 @@ MonoBehaviour:
   portrait: {fileID: 473010019457162390}
   healthBar: {fileID: 3532615420810130794}
   nameLabel: {fileID: 0}
+  fadeDuration: 2
 --- !u!1 &6144533464861816819
 GameObject:
   m_ObjectHideFlags: 0

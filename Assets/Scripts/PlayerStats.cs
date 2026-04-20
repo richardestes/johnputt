@@ -16,10 +16,12 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float powerMultiplier = 1f;
 
     [Header("Damage")]
-    [SerializeField] private int damageBonus = 0;
+    [SerializeField] private int minDamage          = 3;
+    [SerializeField] private int damageBonus        = 0;
     [SerializeField] private int bankShotDamageBonus = 0;
 
-    public int  DamageBonus        => damageBonus;
+    public int  MinDamage           => minDamage;
+    public int  DamageBonus         => damageBonus;
     public int  BankShotDamageBonus => bankShotDamageBonus;
 
     // Per-encounter debuffs — cleared by OnEncounterStart()

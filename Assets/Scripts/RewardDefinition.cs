@@ -4,7 +4,8 @@ public enum RewardType
 {
     DamageBonus,
     ExtraStrokes,
-    BankShotBonus
+    BankShotBonus,
+    HealPlayer
 }
 
 [CreateAssetMenu(fileName = "RewardDefinition", menuName = "Golf Roguelite/Reward Definition")]

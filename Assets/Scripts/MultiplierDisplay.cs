@@ -27,6 +27,6 @@ public class MultiplierDisplay : MonoBehaviour
 
         float t        = max > 1 ? Mathf.Clamp01((float)(strokes - 1) / (max - 1)) : 1f;
         label.fontSize = Mathf.Lerp(minFontSize, maxFontSize, t);
-        label.text     = $"x{strokes * 100}%";
+        label.text     = $"x{strokes}";
     }
 }

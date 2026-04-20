@@ -207,6 +207,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   maxDragDistance: 4
+  minDragDistance: 0.3
   shotPowerMultiplier: 5
   aimLine: {fileID: 5948307277972312481}
 --- !u!50 &1121649499185563435
@@ -225,7 +226,7 @@ Rigidbody2D:
   m_LinearDamping: 2
   m_AngularDamping: 0.05
   m_GravityScale: 0
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 16b8f6f2764219d4aa02363b6e17f2bc, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0

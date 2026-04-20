@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 
@@ -6,6 +7,7 @@ public class EnemySlotUI : MonoBehaviour
     [SerializeField] SpriteRenderer portrait;
     [SerializeField] HealthBar       healthBar;
     [SerializeField] TMP_Text        nameLabel;
+    [SerializeField] float           fadeDuration = 1f;
 
     private Enemy target;
 
@@ -28,6 +30,31 @@ public class EnemySlotUI : MonoBehaviour
     {
         if (healthBar == null) return;
         healthBar.SetValue(target.CurrentHealth, target.maxHealth);
-        if (portrait != null) portrait.color = new Color(1, 1, 1, target.IsDead ? 0.35f : 1f);
+
+        if (target.IsDead)
+        {
+            if (healthBar != null) healthBar.gameObject.SetActive(false);
+            if (nameLabel != null) nameLabel.gameObject.SetActive(false);
+            StopAllCoroutines();
+            StartCoroutine(FadeOut());
+        }
+    }
+
+    IEnumerator FadeOut()
+    {
+        if (portrait == null) yield break;
+
+        float elapsed    = 0f;
+        Color startColor = portrait.color;
+
+        while (elapsed < fadeDuration)
+        {
+            elapsed        += Time.deltaTime;
+            float alpha     = Mathf.Lerp(1f, 0f, elapsed / fadeDuration);
+            portrait.color  = new Color(startColor.r, startColor.g, startColor.b, alpha);
+            yield return null;
+        }
+
+        gameObject.SetActive(false);
     }
 }
