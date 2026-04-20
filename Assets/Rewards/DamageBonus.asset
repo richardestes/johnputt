@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f41be9a8e7b78e44b6e326ccd2a6fae, type: 3}
+  m_Name: DamageBonus
+  m_EditorClassIdentifier: Assembly-CSharp::RewardDefinition
+  displayName: Damage Bonus
+  description: Base Damage Bonus
+  type: 0
+  value: 10

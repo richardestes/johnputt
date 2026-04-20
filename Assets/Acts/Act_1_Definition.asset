@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6e03907a349e3b43be5f9a8ccb09049, type: 3}
+  m_Name: Act_1_Definition
+  m_EditorClassIdentifier: Assembly-CSharp::ActDefinition
+  actName: Act 1
+  encounters:
+  - {fileID: 11400000, guid: b6eb55f00c2b9c8478fcd4cc5127375c, type: 2}
+  - {fileID: 11400000, guid: 2fd6f5277207ed441a077840f409b188, type: 2}
