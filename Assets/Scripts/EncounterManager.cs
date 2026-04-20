@@ -21,13 +21,13 @@ public class EncounterManager : MonoBehaviour
     public static Transform           PendingSpawnPoint { get; set; }
 
     [Header("References")]
-    public Enemy enemy;
+    public Transform enemySpawnPoint;
 
     [Header("Player Attack Scaling")]
     [Tooltip("Base damage dealt on a successful hole.")]
     [SerializeField] private int baseDamage = 10;
-    [Tooltip("Damage multiplier added per stroke remaining. 0.5 → hole with 4 left = 3x damage.")]
-    [SerializeField] private float multiplierPerRemainingStroke = 0.5f;
+    [Tooltip("Damage bonus multiplier per remaining stroke. 1.0 → 4 strokes left = +400% (5x total).")]
+    [SerializeField] private float multiplierPerRemainingStroke = 1.0f;
 
     [Header("Timing")]
     [SerializeField] private float enemyTurnDelay      = 0.8f;
@@ -44,6 +44,21 @@ public class EncounterManager : MonoBehaviour
     public int            StrokesRemaining => MaxStrokes - StrokesUsed;
 
     // ── Private ────────────────────────────────────────────────────
+
+    private int             currentEnemyIndex;
+    private Enemy[]         spawnedEnemies;
+    public  Enemy[]         SpawnedEnemies => spawnedEnemies;
+
+    public struct AttackDetail
+    {
+        public int   Base;
+        public int   DamageBonus;
+        public float Multiplier;
+        public int   BankShotBonus;
+        public int   Total;
+    }
+    public AttackDetail LastAttack { get; private set; }
+    private Enemy           CurrentEnemy   => spawnedEnemies[currentEnemyIndex];
 
     private GameObject      currentBall;
     private GolfBallShooter currentShooter;
@@ -64,8 +79,12 @@ public class EncounterManager : MonoBehaviour
             Debug.LogWarning("[EncounterManager] No PendingHole or PendingEncounter set.");
             return;
         }
-        MaxStrokes = PendingHole.baseMaxStrokes + PlayerStats.Instance.BonusMaxStrokes;
-        enemy.Initialize(PendingEncounter.enemyMaxHealth, PendingEncounter.enemyDamage);
+        var ps = PlayerStats.Instance;
+        Debug.Log($"[EncounterManager] Start — base={PendingHole.baseMaxStrokes} bonusMax={ps.BonusMaxStrokes} (permanent={ps.DebugPermanentBonus} nextHole={ps.DebugNextHoleBonus})");
+        MaxStrokes = PendingHole.baseMaxStrokes + ps.BonusMaxStrokes;
+        ps.ConsumeNextHoleBonusStrokes();
+        currentEnemyIndex = 0;
+        SpawnEnemies();
         RefreshSpawnPoint();
         SpawnBall();
         TransitionTo(EncounterState.PlayerTurn);
@@ -75,6 +94,25 @@ public class EncounterManager : MonoBehaviour
     {
         if (Instance == this) Instance = null;
         if (currentBall != null) Destroy(currentBall);
+        if (spawnedEnemies != null)
+            foreach (var e in spawnedEnemies)
+                if (e != null) Destroy(e.gameObject);
+    }
+
+    // ── Enemy Helpers ──────────────────────────────────────────────
+
+    private void SpawnEnemies()
+    {
+        var defs = PendingEncounter.enemies;
+        spawnedEnemies = new Enemy[defs.Length];
+        Vector3 spawnPos = enemySpawnPoint != null ? enemySpawnPoint.position : Vector3.zero;
+
+        for (int i = 0; i < defs.Length; i++)
+        {
+            var e = Instantiate(defs[i].prefab, spawnPos, Quaternion.identity).GetComponent<Enemy>();
+            e.Initialize();
+            spawnedEnemies[i] = e;
+        }
     }
 
     // ── Level Helpers ──────────────────────────────────────────────
@@ -90,6 +128,7 @@ public class EncounterManager : MonoBehaviour
 
     private void SpawnBall()
     {
+        LastAttack = default;
         if (currentBall != null) Destroy(currentBall);
 
         Vector3 pos = ballSpawnPoint != null ? ballSpawnPoint.position : Vector3.zero;
@@ -194,19 +233,24 @@ public class EncounterManager : MonoBehaviour
 
     private IEnumerator PlayerAttackRoutine()
     {
+        var   ps         = PlayerStats.Instance;
         float multiplier = 1f + StrokesRemaining * multiplierPerRemainingStroke;
-        int   damage     = Mathf.RoundToInt((baseDamage + PlayerStats.Instance.DamageBonus) * multiplier);
+        int   scaled     = Mathf.RoundToInt(baseDamage * multiplier);
+        int   bankBonus  = (currentShooter != null && currentShooter.HitObstacle) ? ps.BankShotDamageBonus : 0;
+        int   damage     = scaled + ps.DamageBonus + bankBonus;
 
-        bool isBankShot = currentShooter != null && currentShooter.HitObstacle;
-        if (isBankShot)
+        LastAttack = new AttackDetail
         {
-            int bonus = PlayerStats.Instance.BankShotDamageBonus;
-            damage += bonus;
-            DebugHUD.Log($"Bank shot! +{bonus} bonus damage.");
-        }
+            Base          = baseDamage,
+            DamageBonus   = ps.DamageBonus,
+            Multiplier    = multiplier,
+            BankShotBonus = bankBonus,
+            Total         = damage
+        };
 
-        DebugHUD.Log($"Player sinks the putt! Attacks for {damage} damage. ({StrokesRemaining} strokes remaining)");
-        enemy.TakeDamage(damage);
+        if (bankBonus > 0) DebugHUD.Log($"Bank shot! +{bankBonus} bonus damage.");
+        DebugHUD.Log($"Player deals {damage} damage.");
+        CurrentEnemy.TakeDamage(damage);
 
         // TODO: damage popup / hit flash
 
@@ -220,8 +264,10 @@ public class EncounterManager : MonoBehaviour
     {
         yield return new WaitForSeconds(enemyTurnDelay);
 
-        if (!enemy.IsDead)
+        foreach (var enemy in spawnedEnemies)
         {
+            if (enemy.IsDead) continue;
+
             if (enemy.TryBuff())
             {
                 // TODO: buff VFX
@@ -241,7 +287,7 @@ public class EncounterManager : MonoBehaviour
 
     private void EnterCheckEnd()
     {
-        if (enemy.IsDead)
+        if (System.Array.TrueForAll(spawnedEnemies, e => e.IsDead))
         {
             TransitionTo(EncounterState.Reward);
             return;
@@ -253,11 +299,21 @@ public class EncounterManager : MonoBehaviour
             return;
         }
 
-        // Both alive — load next hole and go again
+        // Retarget if current target is dead
+        if (CurrentEnemy.IsDead)
+        {
+            for (int i = 0; i < spawnedEnemies.Length; i++)
+            {
+                if (!spawnedEnemies[i].IsDead) { currentEnemyIndex = i; break; }
+            }
+        }
+
+        // Advance to next hole
         StrokesUsed = 0;
         GameManager.Instance.LoadNextLevel();
         RefreshSpawnPoint();
         MaxStrokes = PendingHole.baseMaxStrokes + PlayerStats.Instance.BonusMaxStrokes;
+        PlayerStats.Instance.ConsumeNextHoleBonusStrokes();
         Debug.Log($"[EncounterManager] New hole — MaxStrokes={MaxStrokes}, StrokeUI={(StrokeUI.Instance == null ? "NULL" : "ok")}");
         SpawnBall();
         TransitionTo(EncounterState.PlayerTurn);

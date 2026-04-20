@@ -10,6 +10,7 @@ public class PlayerStats : MonoBehaviour
 
     [Header("Strokes")]
     [SerializeField] private int bonusMaxStrokes = 0;
+    private int nextHoleBonusStrokes = 0;
 
     [Header("Power")]
     [SerializeField] private float powerMultiplier = 1f;
@@ -28,7 +29,10 @@ public class PlayerStats : MonoBehaviour
     public bool IsDead => currentHealth <= 0;
 
     public int BonusMaxStrokes =>
-        Mathf.Max(0, bonusMaxStrokes - strokeReductionDebuff);
+        Mathf.Max(0, bonusMaxStrokes + nextHoleBonusStrokes - strokeReductionDebuff);
+
+    public int DebugPermanentBonus => bonusMaxStrokes;
+    public int DebugNextHoleBonus  => nextHoleBonusStrokes;
 
     public float EffectivePowerMultiplier =>
         powerMultiplier * powerDebuffMultiplier;
@@ -84,7 +88,9 @@ public class PlayerStats : MonoBehaviour
     }
 
     public void AddPowerMultiplier(float amount)   => powerMultiplier      += amount;
-    public void AddBonusMaxStrokes(int amount)     => bonusMaxStrokes      += amount;
+    public void AddBonusMaxStrokes(int amount)         => bonusMaxStrokes      += amount;
+    public void AddNextHoleBonusStrokes(int amount)    => nextHoleBonusStrokes += amount;
+    public void ConsumeNextHoleBonusStrokes()          => nextHoleBonusStrokes  = 0;
     public void AddDamageBonus(int amount)         => damageBonus          += amount;
     public void AddBankShotBonus(int amount)       => bankShotDamageBonus  += amount;
 }

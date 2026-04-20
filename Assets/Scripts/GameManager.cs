@@ -72,7 +72,8 @@ public class GameManager : MonoBehaviour
     public void LoadEncounterNode(int index)
     {
         UnloadMap();
-        currentEncounter = CurrentAct.encounters[index];
+        currentEncounter  = CurrentAct.encounters[index];
+        currentLevelIndex = -1;
         SpawnLevel(PickNextLevel());
         SceneManager.LoadSceneAsync(encounterSceneName, LoadSceneMode.Additive);
     }
@@ -99,15 +100,17 @@ public class GameManager : MonoBehaviour
         SpawnLevel(PickNextLevel());
     }
 
+    private int currentLevelIndex = -1;
+
     private HoleDefinition PickNextLevel()
     {
         var levels = currentEncounter.levels;
         if (levels.Length == 1) return levels[0];
 
-        HoleDefinition next;
-        do { next = levels[Random.Range(0, levels.Length)]; }
-        while (next == currentLevel);
-        return next;
+        int next = Random.Range(0, levels.Length - 1);
+        if (next >= currentLevelIndex) next++;
+        currentLevelIndex = next;
+        return levels[next];
     }
 
     private void SpawnLevel(HoleDefinition level)

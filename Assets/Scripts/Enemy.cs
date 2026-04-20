@@ -20,7 +20,6 @@ public class Enemy : MonoBehaviour
 {
     [Header("Stats")]
     public int maxHealth;
-    public int damage;
     private int currentHealth;
 
     [Header("Attacks")]
@@ -33,15 +32,14 @@ public class Enemy : MonoBehaviour
 
     private int pendingDamageBonus = 0;
 
-    public bool IsDead => currentHealth <= 0;
+    public bool IsDead        => currentHealth <= 0;
+    public int  CurrentHealth => currentHealth;
 
     // ── Setup ──────────────────────────────────────────────────────
 
-    public void Initialize(int health, int dmg)
+    public void Initialize()
     {
-        maxHealth     = health;
-        damage        = dmg;
-        currentHealth = health;
+        currentHealth = maxHealth;
         DebugHUD.Log($"A wild enemy appears! ({currentHealth} HP)");
     }
 
@@ -71,9 +69,7 @@ public class Enemy : MonoBehaviour
     {
         if (possibleAttacks == null || possibleAttacks.Length == 0)
         {
-            // Fallback to original flat-damage behaviour
-            target.TakeDamage(damage);
-            DebugHUD.Log($"Enemy attacks! Player takes {damage} damage.");
+            Debug.LogWarning($"[Enemy] {name} has no attacks configured!");
             return;
         }
 

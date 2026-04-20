@@ -206,7 +206,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d315eea23138d3947bc2111fa99ce56a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  maxDragDistance: 3
+  maxDragDistance: 4
   shotPowerMultiplier: 5
   aimLine: {fileID: 5948307277972312481}
 --- !u!50 &1121649499185563435

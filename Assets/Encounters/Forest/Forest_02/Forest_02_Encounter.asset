@@ -10,16 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3f31699001578b41abf67f498bf1335, type: 3}
-  m_Name: Forest_01_Encounter
+  m_Name: Forest_02_Encounter
   m_EditorClassIdentifier: Assembly-CSharp::EncounterDefinition
-  displayName: Forest 01
+  displayName: Forest 02
   enemies:
   - name: Enemy A
     prefab: {fileID: 2772036543954761199, guid: 140a4a69b62875042b89546547bddbfe, type: 3}
   - name: Enemy B
     prefab: {fileID: 8965644607697398378, guid: d6f18064a12b16846ac3036f6c93a0b3, type: 3}
+  - name: Enemy C
+    prefab: {fileID: 2555656916350708996, guid: 4585417bd9a42534d88c1b5a6d0e6ca0, type: 3}
+  - name: Enemy D
+    prefab: {fileID: 8848655356205926433, guid: bdbabee01452877458eb22095390ebbe, type: 3}
   levels:
-  - {fileID: 11400000, guid: 9d1e12422c3662c4483778ca170a50c2, type: 2}
-  - {fileID: 11400000, guid: 3dc8e2b1d351f8640b6054279c40a3b9, type: 2}
-  - {fileID: 11400000, guid: 30037ddc8f29c484d84c4b10d696fe05, type: 2}
-  - {fileID: 11400000, guid: cb0fe45b9d225884cb4ddc7a3e1c27a8, type: 2}
+  - {fileID: 11400000, guid: 0528be96b7a98414cb1c83e28736aa22, type: 2}
+  - {fileID: 11400000, guid: 52858b00748205b4bbb53d074bc8ca37, type: 2}
+  - {fileID: 11400000, guid: d7d6e9c1397b6f146be4142023be2711, type: 2}
+  - {fileID: 11400000, guid: d5386582582211646b184fa746eebf81, type: 2}
+  - {fileID: 11400000, guid: 878012ba2ba8b6f49bceedcadd9469b5, type: 2}

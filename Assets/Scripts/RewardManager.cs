@@ -88,7 +88,7 @@ public class RewardManager : MonoBehaviour
                 PlayerStats.Instance.AddDamageBonus(reward.value);
                 break;
             case RewardType.ExtraStrokes:
-                PlayerStats.Instance.AddBonusMaxStrokes(reward.value);
+                PlayerStats.Instance.AddNextHoleBonusStrokes(reward.value);
                 break;
             case RewardType.BankShotBonus:
                 PlayerStats.Instance.AddBankShotBonus(reward.value);

@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3f31699001578b41abf67f498bf1335, type: 3}
   m_Name: Forest_00_Encounter
   m_EditorClassIdentifier: Assembly-CSharp::EncounterDefinition
-  enemyName: Enemy
-  enemyMaxHealth: 50
-  enemyDamage: 5
+  displayName: Forest 00
+  enemies:
+  - name: Enemy A
+    prefab: {fileID: 2772036543954761199, guid: 140a4a69b62875042b89546547bddbfe, type: 3}
   levels:
-  - {fileID: 11400000, guid: de09876c5ab0f944984a6c35f1ac6cbe, type: 2}
-  - {fileID: 11400000, guid: ab39cc3c7c0b5594fbb3bcdac12e0eda, type: 2}
-  - {fileID: 11400000, guid: c43b3500c42ad3a49982571eeccf27c8, type: 2}
-  - {fileID: 11400000, guid: 10381540a53812444b8448bba6845964, type: 2}
+  - {fileID: 11400000, guid: 6f7ab1505ea695948917d2bd0929cc12, type: 2}
+  - {fileID: 11400000, guid: 2570fab51fefa0f4193b5610739ae084, type: 2}
+  - {fileID: 11400000, guid: 4f72a506dc71d8041b7a39966854a683, type: 2}
+  - {fileID: 11400000, guid: fa914929785f8964e83beb33068719a7, type: 2}

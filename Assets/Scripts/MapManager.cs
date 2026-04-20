@@ -9,6 +9,9 @@ public class MapManager : MonoBehaviour
     private GUIStyle _completedStyle;
     private GUIStyle _lockedStyle;
 
+    private string[] _labels;
+    private int      _cachedNodeIndex = -1;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -24,6 +27,8 @@ public class MapManager : MonoBehaviour
 
         if (act == null) return;
 
+        RebuildLabelsIfDirty(act, current);
+
         float cardW  = 260f;
         float cardH  = 60f;
         float pad    = 12f;
@@ -35,25 +40,35 @@ public class MapManager : MonoBehaviour
 
         for (int i = 0; i < act.encounters.Length; i++)
         {
-            float    nodeY   = y + i * (cardH + pad);
-            var      enc     = act.encounters[i];
-            bool     done    = i < current;
-            bool     active  = i == current;
+            float nodeY = y + i * (cardH + pad);
+            bool  done  = i < current;
+            bool  active = i == current;
 
             if (done)
-            {
-                GUI.Box(new Rect(x, nodeY, cardW, cardH), $"✓  {enc.enemyName}", _completedStyle);
-            }
+                GUI.Box(new Rect(x, nodeY, cardW, cardH), _labels[i], _completedStyle);
             else if (active)
             {
-                if (GUI.Button(new Rect(x, nodeY, cardW, cardH), $"▶  {enc.enemyName}", _nodeStyle))
+                if (GUI.Button(new Rect(x, nodeY, cardW, cardH), _labels[i], _nodeStyle))
                     SelectNode(i);
             }
             else
-            {
-                GUI.Box(new Rect(x, nodeY, cardW, cardH), $"🔒  {enc.enemyName}", _lockedStyle);
-            }
+                GUI.Box(new Rect(x, nodeY, cardW, cardH), _labels[i], _lockedStyle);
         }
+    }
+
+    private void RebuildLabelsIfDirty(ActDefinition act, int current)
+    {
+        if (_cachedNodeIndex == current && _labels != null) return;
+
+        _labels = new string[act.encounters.Length];
+        for (int i = 0; i < act.encounters.Length; i++)
+        {
+            string name = act.encounters[i].displayName;
+            _labels[i] = i < current  ? $"✓  {name}"
+                       : i == current ? $"▶  {name}"
+                       :                $"🔒  {name}";
+        }
+        _cachedNodeIndex = current;
     }
 
     private void SelectNode(int index)
