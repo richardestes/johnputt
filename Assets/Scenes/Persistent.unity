@@ -211,8 +211,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c92863205a41041b66d7d0c815debc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugHUD
-  maxLines: 3
-  fontSize: 18
+  logMaxLines: 10
+  statsFontSize: 16
+  logFontSize: 13
+  toggleKey: 3
 --- !u!1 &2113674466
 GameObject:
   m_ObjectHideFlags: 0

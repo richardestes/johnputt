@@ -24,10 +24,8 @@ public class EncounterManager : MonoBehaviour
     public Transform enemySpawnPoint;
 
     [Header("Player Attack Scaling")]
-    [Tooltip("Base damage dealt on a successful hole.")]
+    [Tooltip("Max damage at full wind-back. Scales down linearly to 0 at minimum drag.")]
     [SerializeField] private int baseDamage = 10;
-    [Tooltip("Damage bonus multiplier per remaining stroke. 1.0 → 4 strokes left = +400% (5x total).")]
-    [SerializeField] private float multiplierPerRemainingStroke = 1.0f;
 
     [Header("Timing")]
     [SerializeField] private float enemyTurnDelay      = 0.8f;
@@ -80,6 +78,7 @@ public class EncounterManager : MonoBehaviour
             return;
         }
         var ps = PlayerStats.Instance;
+        ps.OnEncounterStart();
         Debug.Log($"[EncounterManager] Start — base={PendingHole.baseMaxStrokes} bonusMax={ps.BonusMaxStrokes} (permanent={ps.DebugPermanentBonus} nextHole={ps.DebugNextHoleBonus})");
         MaxStrokes = PendingHole.baseMaxStrokes + ps.BonusMaxStrokes;
         ps.ConsumeNextHoleBonusStrokes();
@@ -87,6 +86,7 @@ public class EncounterManager : MonoBehaviour
         SpawnEnemies();
         RefreshSpawnPoint();
         SpawnBall();
+        CombatViewController.Instance?.Initialize(spawnedEnemies);
         TransitionTo(EncounterState.PlayerTurn);
     }
 
@@ -128,7 +128,6 @@ public class EncounterManager : MonoBehaviour
 
     private void SpawnBall()
     {
-        LastAttack = default;
         if (currentBall != null) Destroy(currentBall);
 
         Vector3 pos = ballSpawnPoint != null ? ballSpawnPoint.position : Vector3.zero;
@@ -178,7 +177,7 @@ public class EncounterManager : MonoBehaviour
     private void EnterPlayerTurn()
     {
         SetShooterEnabled(true);
-        StrokeUI.Instance?.Refresh();
+        MultiplierDisplay.Instance?.Refresh();
     }
 
     // Called by GolfBallShooter on fire
@@ -187,7 +186,7 @@ public class EncounterManager : MonoBehaviour
         if (State != EncounterState.PlayerTurn) return;
 
         StrokesUsed++;
-        StrokeUI.Instance?.Refresh();
+        MultiplierDisplay.Instance?.Refresh();
         TransitionTo(EncounterState.BallRolling);
     }
 
@@ -234,14 +233,16 @@ public class EncounterManager : MonoBehaviour
     private IEnumerator PlayerAttackRoutine()
     {
         var   ps         = PlayerStats.Instance;
-        float multiplier = 1f + StrokesRemaining * multiplierPerRemainingStroke;
-        int   scaled     = Mathf.RoundToInt(baseDamage * multiplier);
+        float shotPower  = currentShooter != null ? currentShooter.LastShotPower : 1f;
+        int   rawBase    = Mathf.RoundToInt(baseDamage * shotPower);
+        int   multiplier = Mathf.Max(1, StrokesRemaining);
+        int   scaled     = rawBase * multiplier;
         int   bankBonus  = (currentShooter != null && currentShooter.HitObstacle) ? ps.BankShotDamageBonus : 0;
         int   damage     = scaled + ps.DamageBonus + bankBonus;
 
         LastAttack = new AttackDetail
         {
-            Base          = baseDamage,
+            Base          = rawBase,
             DamageBonus   = ps.DamageBonus,
             Multiplier    = multiplier,
             BankShotBonus = bankBonus,
@@ -314,7 +315,7 @@ public class EncounterManager : MonoBehaviour
         RefreshSpawnPoint();
         MaxStrokes = PendingHole.baseMaxStrokes + PlayerStats.Instance.BonusMaxStrokes;
         PlayerStats.Instance.ConsumeNextHoleBonusStrokes();
-        Debug.Log($"[EncounterManager] New hole — MaxStrokes={MaxStrokes}, StrokeUI={(StrokeUI.Instance == null ? "NULL" : "ok")}");
+        Debug.Log($"[EncounterManager] New hole — MaxStrokes={MaxStrokes}");
         SpawnBall();
         TransitionTo(EncounterState.PlayerTurn);
     }

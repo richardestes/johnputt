@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RewardDefinition
   displayName: Extra Stroke Bonus
   description: Get Extra Strokes!
-  type: 0
+  type: 1
   value: 2

@@ -1,14 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class DebugHUD : MonoBehaviour
 {
     [SerializeField] private int logMaxLines = 5;
     [SerializeField] private int statsFontSize = 16;
     [SerializeField] private int logFontSize   = 13;
+    [SerializeField] private Key toggleKey     = Key.Tab;
 
     private static DebugHUD _instance;
     private readonly List<string> _log = new();
+    private bool _visible = true;
 
     private GUIStyle _statsStyle;
     private GUIStyle _headerStyle;
@@ -16,6 +19,12 @@ public class DebugHUD : MonoBehaviour
     private GUIStyle _panelStyle;
 
     private void Awake() => _instance = this;
+
+    private void Update()
+    {
+        if (Keyboard.current[toggleKey].wasPressedThisFrame)
+            _visible = !_visible;
+    }
 
     public static void Log(string message)
     {
@@ -27,6 +36,7 @@ public class DebugHUD : MonoBehaviour
 
     private void OnGUI()
     {
+        if (!_visible) return;
         InitStyles();
 
         float x       = 10f;
@@ -80,10 +90,11 @@ public class DebugHUD : MonoBehaviour
     {
         var list = new List<StatLine>();
 
-        list.Add(new StatLine { header = "State",   value = em.State.ToString() });
-        list.Add(new StatLine { header = "───────", value = "" });
-        list.Add(new StatLine { header = "Player",  value = $"{ps.currentHealth} / {ps.maxHealth} HP" });
-        list.Add(new StatLine { header = "Strokes", value = $"{em.StrokesRemaining} / {em.MaxStrokes}" });
+        list.Add(new StatLine { header = "State",      value = em.State.ToString() });
+        list.Add(new StatLine { header = "───────",    value = "" });
+        list.Add(new StatLine { header = "Player",     value = $"{ps.currentHealth} / {ps.maxHealth} HP" });
+        list.Add(new StatLine { header = "Strokes",    value = $"{em.StrokesRemaining} / {em.MaxStrokes}" });
+        list.Add(new StatLine { header = "Multiplier", value = $"{Mathf.Max(1, em.StrokesRemaining) * 100}%" });
 
         var atk = em.LastAttack;
         if (atk.Total > 0)
@@ -92,9 +103,8 @@ public class DebugHUD : MonoBehaviour
             list.Add(new StatLine { header = "Base dmg",   value = atk.Base.ToString() });
             if (atk.DamageBonus > 0)
                 list.Add(new StatLine { header = "Flat bonus", value = $"+{atk.DamageBonus}" });
-            list.Add(new StatLine { header = "Multiplier", value = $"x{atk.Multiplier:F1}" });
             if (atk.BankShotBonus > 0)
-                list.Add(new StatLine { header = "Bank shot", value = $"+{atk.BankShotBonus}" });
+                list.Add(new StatLine { header = "Bank shot",  value = $"+{atk.BankShotBonus}" });
             list.Add(new StatLine { header = "Total",      value = $"{atk.Total} dmg" });
         }
 

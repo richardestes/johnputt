@@ -28,6 +28,8 @@ public class PlayerStats : MonoBehaviour
 
     public bool IsDead => currentHealth <= 0;
 
+    public event System.Action OnHealthChanged;
+
     public int BonusMaxStrokes =>
         Mathf.Max(0, bonusMaxStrokes + nextHoleBonusStrokes - strokeReductionDebuff);
 
@@ -50,6 +52,7 @@ public class PlayerStats : MonoBehaviour
     public void TakeDamage(int amount)
     {
         currentHealth = Mathf.Max(0, currentHealth - amount);
+        OnHealthChanged?.Invoke();
         DebugHUD.Log(currentHealth <= 0
             ? $"Player takes {amount} damage. You have been defeated!"
             : $"Player takes {amount} damage. ({currentHealth}/{maxHealth} HP remaining)");
@@ -58,6 +61,7 @@ public class PlayerStats : MonoBehaviour
     public void Heal(int amount)
     {
         currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        OnHealthChanged?.Invoke();
     }
 
     // ── Debuffs ────────────────────────────────────────────────────
@@ -88,7 +92,7 @@ public class PlayerStats : MonoBehaviour
     }
 
     public void AddPowerMultiplier(float amount)   => powerMultiplier      += amount;
-    public void AddBonusMaxStrokes(int amount)         => bonusMaxStrokes      += amount;
+    public void AddBonusMaxStrokes(int amount) => bonusMaxStrokes += amount;
     public void AddNextHoleBonusStrokes(int amount)    => nextHoleBonusStrokes += amount;
     public void ConsumeNextHoleBonusStrokes()          => nextHoleBonusStrokes  = 0;
     public void AddDamageBonus(int amount)         => damageBonus          += amount;

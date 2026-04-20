@@ -120,6 +120,9 @@ public class GameManager : MonoBehaviour
 
         currentLevelInstance               = Instantiate(level.levelPrefab, Vector3.zero, Quaternion.identity);
         currentLevel                       = level;
+        var levelCam = currentLevelInstance.GetComponentInChildren<Camera>();
+        if (levelCam != null)
+            levelCam.rect = new Rect(0, 0, 1, 0.5f);
         EncounterManager.PendingHole       = level;
         EncounterManager.PendingEncounter  = currentEncounter;
         EncounterManager.PendingSpawnPoint = FindSpawnPoint(currentLevelInstance);

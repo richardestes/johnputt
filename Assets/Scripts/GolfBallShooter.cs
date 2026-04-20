@@ -4,7 +4,8 @@ using UnityEngine.InputSystem;
 public class GolfBallShooter : MonoBehaviour
 {
     [Header("Shot Settings")]
-    public float maxDragDistance = 3f;
+    public float maxDragDistance    = 3f;
+    public float minDragDistance    = 0.3f;
     public float shotPowerMultiplier = 8f;
 
     [Header("References")]
@@ -17,7 +18,8 @@ public class GolfBallShooter : MonoBehaviour
     private Vector2 dragStartWorld;
     private bool ballInMotion = false;
 
-    public bool HitObstacle { get; private set; }
+    public bool  HitObstacle   { get; private set; }
+    public float LastShotPower { get; private set; } // 0–1, full wind-back = 1
 
     private InputAction clickAction;
     private Mouse mouse;
@@ -110,11 +112,12 @@ public class GolfBallShooter : MonoBehaviour
 
     void Shoot(Vector2 dragVector)
     {
-        if (dragVector.magnitude < 0.1f) return;
+        if (dragVector.magnitude < minDragDistance) return;
 
-        float t         = dragVector.magnitude / maxDragDistance;
-        float power     = Mathf.Sqrt(t) * PlayerStats.Instance.EffectivePowerMultiplier;
-        HitObstacle  = false;
+        float t        = dragVector.magnitude / maxDragDistance;
+        float power    = Mathf.Sqrt(t) * PlayerStats.Instance.EffectivePowerMultiplier;
+        HitObstacle    = false;
+        LastShotPower  = Mathf.Clamp01(t);
         rb.AddForce(-dragVector * power * shotPowerMultiplier, ForceMode2D.Impulse);
         ballInMotion = true;
 

@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   maxHealth: 35
+  portrait: {fileID: 21300000, guid: e35c1bbdbc0c6524686f73dde227e0b4, type: 3}
   possibleAttacks:
   - type: 0
     value: 8

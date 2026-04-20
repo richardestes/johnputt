@@ -19,8 +19,9 @@ public class EnemyAttackDefinition
 public class Enemy : MonoBehaviour
 {
     [Header("Stats")]
-    public int maxHealth;
-    private int currentHealth;
+    public int    maxHealth;
+    public Sprite portrait;
+    private int   currentHealth;
 
     [Header("Attacks")]
     [SerializeField] private EnemyAttackDefinition[] possibleAttacks;
@@ -32,14 +33,19 @@ public class Enemy : MonoBehaviour
 
     private int pendingDamageBonus = 0;
 
-    public bool IsDead        => currentHealth <= 0;
-    public int  CurrentHealth => currentHealth;
+    public bool   IsDead        => currentHealth <= 0;
+    public int    CurrentHealth => currentHealth;
+    public Sprite Portrait      => portrait;
+
+    public event System.Action OnHealthChanged;
 
     // ── Setup ──────────────────────────────────────────────────────
 
     public void Initialize()
     {
         currentHealth = maxHealth;
+        foreach (var sr in GetComponentsInChildren<Renderer>())
+            sr.enabled = false;
         DebugHUD.Log($"A wild enemy appears! ({currentHealth} HP)");
     }
 
@@ -48,6 +54,7 @@ public class Enemy : MonoBehaviour
     public void TakeDamage(int amount)
     {
         currentHealth = Mathf.Max(0, currentHealth - amount);
+        OnHealthChanged?.Invoke();
         DebugHUD.Log(currentHealth <= 0
             ? $"Enemy takes {amount} damage. Enemy is defeated!"
             : $"Enemy takes {amount} damage. ({currentHealth}/{maxHealth} HP remaining)");
