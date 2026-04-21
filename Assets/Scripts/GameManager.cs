@@ -40,6 +40,20 @@ public class GameManager : MonoBehaviour
         LoadMap();
     }
 
+    public void RestartRun()
+    {
+        PlayerStats.Instance.ResetForNewRun();
+        UnloadEncounter();
+        CurrentNodeIndex  = 0;
+        currentLevelIndex = -1;
+        currentEncounter  = null;
+
+        var mapScene = SceneManager.GetSceneByName(mapSceneName);
+        if (mapScene.isLoaded) SceneManager.UnloadSceneAsync(mapSceneName);
+
+        LoadMap();
+    }
+
     public void ReturnToMap()
     {
         UnloadEncounter();
@@ -107,8 +121,10 @@ public class GameManager : MonoBehaviour
         var levels = currentEncounter.levels;
         if (levels.Length == 1) return levels[0];
 
-        int next = Random.Range(0, levels.Length - 1);
-        if (next >= currentLevelIndex) next++;
+        int next;
+        do { next = Random.Range(0, levels.Length); }
+        while (next == currentLevelIndex);
+
         currentLevelIndex = next;
         return levels[next];
     }

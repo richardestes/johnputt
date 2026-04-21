@@ -11,7 +11,7 @@ public class DebugHUD : MonoBehaviour
 
     private static DebugHUD _instance;
     private readonly List<string> _log = new();
-    private bool _visible = true;
+    private bool _visible = false;
 
     private GUIStyle _statsStyle;
     private GUIStyle _headerStyle;

@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 251aac709da6ad0408f6e4b7909f7d38, type: 3}
-  m_Name: Forest_01_Hole_C
+  m_Name: Forest_03_Hole_E
   m_EditorClassIdentifier: Assembly-CSharp::HoleDefinition
-  holeName: Hole C
-  levelPrefab: {fileID: 7494829548560724755, guid: 290bf594c8b90be4cafe5806fb2c1353, type: 3}
+  holeName: Hole E
+  levelPrefab: {fileID: 7494829548560724755, guid: 956aa18455d74bc48bdb6473139d9162, type: 3}
   baseMaxStrokes: 4

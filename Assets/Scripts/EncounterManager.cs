@@ -331,7 +331,14 @@ public class EncounterManager : MonoBehaviour
 
     private void EnterGameOver()
     {
-        DebugHUD.Log("Game Over. Your round has come to an end.");
-        // TODO: game-over screen
+        SetShooterEnabled(false);
+        DebugHUD.Log("Game Over. Press R to restart.");
+    }
+
+    private void Update()
+    {
+        if (State != EncounterState.GameOver) return;
+        if (UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame)
+            GameManager.Instance.RestartRun();
     }
 }

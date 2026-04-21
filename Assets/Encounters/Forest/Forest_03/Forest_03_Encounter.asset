@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3f31699001578b41abf67f498bf1335, type: 3}
+  m_Name: Forest_03_Encounter
+  m_EditorClassIdentifier: Assembly-CSharp::EncounterDefinition
+  displayName: Forest 03
+  enemies:
+  - name: Enemy A
+    prefab: {fileID: 2772036543954761199, guid: 140a4a69b62875042b89546547bddbfe, type: 3}
+  - name: Enemy A
+    prefab: {fileID: 2772036543954761199, guid: 140a4a69b62875042b89546547bddbfe, type: 3}
+  - name: Enemy C
+    prefab: {fileID: 2555656916350708996, guid: 4585417bd9a42534d88c1b5a6d0e6ca0, type: 3}
+  - name: Enemy D
+    prefab: {fileID: 8848655356205926433, guid: bdbabee01452877458eb22095390ebbe, type: 3}
+  levels:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}

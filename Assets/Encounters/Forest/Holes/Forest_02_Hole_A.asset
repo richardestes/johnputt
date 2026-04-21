@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoleDefinition
   holeName: Hole A
   levelPrefab: {fileID: 7494829548560724755, guid: 582a7641151516444b2148ad1e2773db, type: 3}
-  baseMaxStrokes: 6
+  baseMaxStrokes: 3

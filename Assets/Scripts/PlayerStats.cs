@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -16,8 +16,8 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float powerMultiplier = 1f;
 
     [Header("Damage")]
-    [SerializeField] private int minDamage          = 3;
-    [SerializeField] private int damageBonus        = 0;
+    [SerializeField] private int minDamage           = 3;
+    [SerializeField] private int damageBonus         = 0;
     [SerializeField] private int bankShotDamageBonus = 0;
 
     public int  MinDamage           => minDamage;
@@ -41,12 +41,45 @@ public class PlayerStats : MonoBehaviour
     public float EffectivePowerMultiplier =>
         powerMultiplier * powerDebuffMultiplier;
 
+    // Cached inspector values — restored on reset
+    private int   _baseMaxHealth;
+    private int   _baseBonusMaxStrokes;
+    private float _basePowerMultiplier;
+    private int   _baseMinDamage;
+    private int   _baseDamageBonus;
+    private int   _baseBankShotDamageBonus;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        _baseMaxHealth           = maxHealth;
+        _baseBonusMaxStrokes     = bonusMaxStrokes;
+        _basePowerMultiplier     = powerMultiplier;
+        _baseMinDamage           = minDamage;
+        _baseDamageBonus         = damageBonus;
+        _baseBankShotDamageBonus = bankShotDamageBonus;
+
         currentHealth = maxHealth;
+    }
+
+    // ── Reset ──────────────────────────────────────────────────────
+
+    public void ResetForNewRun()
+    {
+        maxHealth            = _baseMaxHealth;
+        bonusMaxStrokes      = _baseBonusMaxStrokes;
+        nextHoleBonusStrokes = 0;
+        powerMultiplier      = _basePowerMultiplier;
+        minDamage            = _baseMinDamage;
+        damageBonus          = _baseDamageBonus;
+        bankShotDamageBonus  = _baseBankShotDamageBonus;
+        strokeReductionDebuff = 0;
+        powerDebuffMultiplier = 1f;
+        currentHealth        = maxHealth;
+        OnHealthChanged?.Invoke();
     }
 
     // ── Damage & Healing ───────────────────────────────────────────
@@ -87,16 +120,11 @@ public class PlayerStats : MonoBehaviour
 
     // ── Permanent Upgrades ─────────────────────────────────────────
 
-    public void AddMaxHealth(int amount)
-    {
-        maxHealth     += amount;
-        currentHealth += amount;
-    }
-
-    public void AddPowerMultiplier(float amount)   => powerMultiplier      += amount;
-    public void AddBonusMaxStrokes(int amount) => bonusMaxStrokes += amount;
-    public void AddNextHoleBonusStrokes(int amount)    => nextHoleBonusStrokes += amount;
-    public void ConsumeNextHoleBonusStrokes()          => nextHoleBonusStrokes  = 0;
-    public void AddDamageBonus(int amount)         => damageBonus          += amount;
-    public void AddBankShotBonus(int amount)       => bankShotDamageBonus  += amount;
+    public void AddMaxHealth(int amount)         { maxHealth += amount; currentHealth += amount; }
+    public void AddPowerMultiplier(float amount) => powerMultiplier      += amount;
+    public void AddBonusMaxStrokes(int amount)   => bonusMaxStrokes      += amount;
+    public void AddNextHoleBonusStrokes(int amount)  => nextHoleBonusStrokes += amount;
+    public void ConsumeNextHoleBonusStrokes()        => nextHoleBonusStrokes  = 0;
+    public void AddDamageBonus(int amount)       => damageBonus          += amount;
+    public void AddBankShotBonus(int amount)     => bankShotDamageBonus  += amount;
 }
