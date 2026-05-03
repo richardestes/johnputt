@@ -65,4 +65,19 @@ public class CombatViewController : MonoBehaviour
         pos.z = 0f;
         return pos;
     }
+
+    public Vector2 GetPlayerScreenPos()
+    {
+        if (combatCamera == null || playerSlot == null) return Vector2.zero;
+        return combatCamera.WorldToScreenPoint(playerSlot.transform.position);
+    }
+
+    public Vector2 GetEnemyScreenPos(Enemy enemy)
+    {
+        if (combatCamera == null || enemySlots == null) return Vector2.zero;
+        foreach (var slot in enemySlots)
+            if (slot != null && slot.BoundEnemy == enemy)
+                return combatCamera.WorldToScreenPoint(slot.transform.position);
+        return Vector2.zero;
+    }
 }

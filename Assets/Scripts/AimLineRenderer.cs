@@ -24,7 +24,7 @@ public class AimLineRenderer : MonoBehaviour
             if (i < activeDots)
             {
                 dots[i].SetActive(true);
-                dots[i].transform.position = origin + shotDirection * (i + 1) * dotSpacing;
+                dots[i].transform.position = origin + shotDirection * ((i + 1) * dotSpacing);
             }
             else
             {

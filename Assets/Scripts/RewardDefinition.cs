@@ -3,9 +3,11 @@ using UnityEngine;
 public enum RewardType
 {
     DamageBonus,
-    ExtraStrokes,
+    ExtraBalls,
     BankShotBonus,
-    HealPlayer
+    HealPlayer,
+    ParBonus,
+    MagnetRadius
 }
 
 [CreateAssetMenu(fileName = "RewardDefinition", menuName = "Golf Roguelite/Reward Definition")]

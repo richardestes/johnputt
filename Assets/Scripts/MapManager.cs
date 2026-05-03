@@ -14,9 +14,13 @@ public class MapManager : MonoBehaviour
     private GUIStyle _titleStyle;
     private GUIStyle _labelStyle;
     private GUIStyle _labelDimStyle;
+    private GUIStyle _parLabelStyle;
     private GUIStyle _invisible;
 
     private bool _initialized;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => Instance = null;
 
     void Awake()
     {
@@ -30,7 +34,7 @@ public class MapManager : MonoBehaviour
 
         var act     = GameManager.Instance?.CurrentAct;
         int current = GameManager.Instance?.CurrentNodeIndex ?? 0;
-        if (act == null) return;
+        if (!act) return;
 
         int   n       = act.encounters.Length;
         float spacing = 64f;
@@ -69,9 +73,12 @@ public class MapManager : MonoBehaviour
                             done ? _dotCompleted : (active ? _dotCurrent : _dotLocked));
             GUI.color = Color.white;
 
-            GUI.Label(new Rect(cx + r + 12f,  cy - 12f, 220f, 24f),
+            GUI.Label(new Rect(cx + r + 12f, cy - 14f, 220f, 24f),
                       act.encounters[i].displayName,
                       _labelDimStyle);
+            GUI.Label(new Rect(cx + r + 12f, cy + 10f, 220f, 18f),
+                      $"Par {GameManager.Instance.RolledPars[i]}",
+                      _parLabelStyle);
 
             if (active && GUI.Button(new Rect(cx - rGlow, cy - rGlow, rGlow * 2, rGlow * 2), "", _invisible))
                 GameManager.Instance.LoadEncounterNode(i);
@@ -112,6 +119,13 @@ public class MapManager : MonoBehaviour
             hover    = { textColor = new Color(0.35f, 0.35f, 0.35f) }
         };
 
+        _parLabelStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 12,
+            normal   = { textColor = new Color(0.25f, 0.25f, 0.28f) },
+            hover    = { textColor = new Color(0.25f, 0.25f, 0.28f) }
+        };
+
         _invisible = new GUIStyle();
     }
 
@@ -120,11 +134,14 @@ public class MapManager : MonoBehaviour
         var   tex    = new Texture2D(size, size, TextureFormat.RGBA32, false);
         float radius = size * 0.5f;
         var   center = new Vector2(radius, radius);
+        var   pixels = new Color[size * size];
 
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
-                tex.SetPixel(x, y, Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center) <= radius
-                    ? color : Color.clear);
+                pixels[y * size + x] = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center) <= radius
+                    ? color : Color.clear;
+
+        tex.SetPixels(pixels);
         tex.Apply();
         return tex;
     }
@@ -132,7 +149,7 @@ public class MapManager : MonoBehaviour
     static Texture2D MakeSolid(Color color)
     {
         var tex = new Texture2D(2, 2);
-        for (int i = 0; i < 4; i++) tex.SetPixel(i % 2, i / 2, color);
+        tex.SetPixels(new[] { color, color, color, color });
         tex.Apply();
         return tex;
     }

@@ -22,11 +22,11 @@ public class MultiplierDisplay : MonoBehaviour
         var em = EncounterManager.Instance;
         if (em == null || label == null) return;
 
-        int strokes = em.StrokesRemaining;
-        int max     = em.MaxStrokes;
+        int multiplier = em.ParMultiplier;
+        int par        = em.Par;
 
-        float t        = max > 1 ? Mathf.Clamp01((float)(strokes - 1) / (max - 1)) : 1f;
+        float t        = par > 1 ? Mathf.Clamp01((float)(multiplier - 1) / (par - 1)) : 1f;
         label.fontSize = Mathf.Lerp(minFontSize, maxFontSize, t);
-        label.text     = $"x{strokes}";
+        label.text     = $"x{multiplier}";
     }
 }

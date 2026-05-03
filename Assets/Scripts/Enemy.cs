@@ -3,7 +3,7 @@
 public enum EnemyAttackType
 {
     DealDamage,
-    ReduceStrokes,
+    DrainBalls,
     ApplyDebuff
 }
 
@@ -11,7 +11,7 @@ public enum EnemyAttackType
 public class EnemyAttackDefinition
 {
     public EnemyAttackType type;
-    [Tooltip("DealDamage: HP amount | ReduceStrokes: stroke count | ApplyDebuff: % power reduction (0-100)")]
+    [Tooltip("DealDamage: HP amount | DrainBalls: ball count | ApplyDebuff: % power reduction (0-100)")]
     public int value = 5;
     public string description = "???";
 }
@@ -55,6 +55,11 @@ public class Enemy : MonoBehaviour
     {
         currentHealth = Mathf.Max(0, currentHealth - amount);
         OnHealthChanged?.Invoke();
+
+        var screenPos = CombatViewController.Instance?.GetEnemyScreenPos(this) ?? Vector2.zero;
+        screenPos.x += 50; // offset 
+        DamageNumbers.Instance?.Spawn($"-{amount}", screenPos, Color.red);
+
         DebugHUD.Log(currentHealth <= 0
             ? $"Enemy takes {amount} damage. Enemy is defeated!"
             : $"Enemy takes {amount} damage. ({currentHealth}/{maxHealth} HP remaining)");
@@ -91,8 +96,9 @@ public class Enemy : MonoBehaviour
             case EnemyAttackType.DealDamage:
                 target.TakeDamage(effectiveVal);
                 break;
-            case EnemyAttackType.ReduceStrokes:
-                target.ApplyStrokeReduction(effectiveVal);
+            case EnemyAttackType.DrainBalls:
+                for (int i = 0; i < effectiveVal; i++) target.SpendBall();
+                DebugHUD.Log($"Enemy drained {effectiveVal} ball(s). ({target.currentBalls}/{target.maxBalls} remaining)");
                 break;
             case EnemyAttackType.ApplyDebuff:
                 target.ApplyPowerDebuff(effectiveVal);

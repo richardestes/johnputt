@@ -18,6 +18,9 @@ public class DebugHUD : MonoBehaviour
     private GUIStyle _logStyle;
     private GUIStyle _panelStyle;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => _instance = null;
+
     private void Awake() => _instance = this;
 
     private void Update()
@@ -93,8 +96,9 @@ public class DebugHUD : MonoBehaviour
         list.Add(new StatLine { header = "State",      value = em.State.ToString() });
         list.Add(new StatLine { header = "───────",    value = "" });
         list.Add(new StatLine { header = "Player",     value = $"{ps.currentHealth} / {ps.maxHealth} HP" });
-        list.Add(new StatLine { header = "Strokes",    value = $"{em.StrokesRemaining} / {em.MaxStrokes}" });
-        list.Add(new StatLine { header = "Multiplier", value = $"{Mathf.Max(1, em.StrokesRemaining) * 100}%" });
+        list.Add(new StatLine { header = "Balls",      value = $"{ps.currentBalls} / {ps.maxBalls}" });
+        list.Add(new StatLine { header = "Par",        value = $"{em.Par}" });
+        list.Add(new StatLine { header = "Multiplier", value = $"x{em.ParMultiplier}" });
 
         var atk = em.LastAttack;
         if (atk.Total > 0)

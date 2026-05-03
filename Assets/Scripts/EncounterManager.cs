@@ -1,5 +1,7 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // Defined outside the class so other scripts can reference it without qualification
 public enum EncounterState
@@ -16,7 +18,6 @@ public enum EncounterState
 public class EncounterManager : MonoBehaviour
 {
     public static EncounterManager Instance { get; private set; }
-    public static HoleDefinition     PendingHole     { get; set; }
     public static EncounterDefinition PendingEncounter { get; set; }
     public static Transform           PendingSpawnPoint { get; set; }
 
@@ -33,18 +34,26 @@ public class EncounterManager : MonoBehaviour
 
     [Header("Ball")]
     public GameObject ballPrefab;
+    [SerializeField] private float ballRefundPercent = 0.25f;
+
+    [Header("Mana")]
+    [SerializeField] private GameObject manaPrefab;
+    [FormerlySerializedAs("manaPerSpecialAttack")] [SerializeField] private int        manaRequired = 5;
+    [SerializeField] private int        manaSpecialDamage    = 20;
+    [SerializeField] private int        manaSpawnMin         = 10;
+    [SerializeField] private int        manaSpawnMax         = 20;
 
     // ── State ──────────────────────────────────────────────────────
 
-    public EncounterState State         { get; private set; }
-    public int            MaxStrokes    { get; private set; }
-    public int            StrokesUsed   { get; private set; }
-    public int            StrokesRemaining => MaxStrokes - StrokesUsed;
+    public EncounterState State          { get; private set; }
+    public int            Par            { get; private set; }
+    public int            StrokesThisHole { get; private set; }
+    public int            ParMultiplier  => Mathf.Max(1, Par - StrokesThisHole);
 
     // ── Private ────────────────────────────────────────────────────
 
     private int             currentEnemyIndex;
-    private int             strokesAtShot;
+    private int             parMultiplierAtShot;
     private Enemy[]         spawnedEnemies;
     public  Enemy[]         SpawnedEnemies => spawnedEnemies;
 
@@ -63,7 +72,24 @@ public class EncounterManager : MonoBehaviour
     private GolfBallShooter currentShooter;
     private Transform       ballSpawnPoint;
 
+    public GameObject CurrentBall => currentBall;
+
+    private readonly List<GameObject> manaObjects = new List<GameObject>();
+    private int                       currentMana;
+
+    public int CurrentMana  => currentMana;
+    public int ManaRequired => manaRequired;
+    public event System.Action OnManaChanged;
+
     // ── Lifecycle ──────────────────────────────────────────────────
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics()
+    {
+        Instance          = null;
+        PendingEncounter  = null;
+        PendingSpawnPoint = null;
+    }
 
     private void Awake()
     {
@@ -73,22 +99,95 @@ public class EncounterManager : MonoBehaviour
 
     private void Start()
     {
-        if (PendingHole == null || PendingEncounter == null)
+        if (PendingEncounter == null)
         {
-            Debug.LogWarning("[EncounterManager] No PendingHole or PendingEncounter set.");
+            Debug.LogWarning("[EncounterManager] No PendingEncounter set.");
             return;
         }
         var ps = PlayerStats.Instance;
         ps.OnEncounterStart();
-        Debug.Log($"[EncounterManager] Start — base={PendingHole.baseMaxStrokes} bonusMax={ps.BonusMaxStrokes} (permanent={ps.DebugPermanentBonus} nextHole={ps.DebugNextHoleBonus})");
-        MaxStrokes = PendingHole.baseMaxStrokes + ps.BonusMaxStrokes;
-        ps.ConsumeNextHoleBonusStrokes();
+        Par = GameManager.Instance.RolledPars[GameManager.Instance.CurrentNodeIndex];
+        StrokesThisHole = 0;
         currentEnemyIndex = 0;
+        currentMana = 0;
         SpawnEnemies();
         RefreshSpawnPoint();
+        SpawnMana();
         SpawnBall();
         CombatViewController.Instance?.Initialize(spawnedEnemies);
         TransitionTo(EncounterState.PlayerTurn);
+    }
+
+    private void SpawnMana()
+    {
+        if (manaPrefab == null) return;
+
+        Camera levelCam = null;
+        foreach (var cam in Camera.allCameras)
+        {
+            if (cam.rect.y < 0.1f && cam.rect.height < 0.6f)
+            {
+                levelCam = cam;
+                break;
+            }
+        }
+
+        if (levelCam == null)
+        {
+            Debug.LogWarning("[EncounterManager] Could not find level camera for mana spawn.");
+            return;
+        }
+
+        float   halfH  = levelCam.orthographicSize;
+        float   halfW  = halfH * levelCam.aspect;
+        Vector2 center = levelCam.transform.position;
+        int     count  = Random.Range(manaSpawnMin, manaSpawnMax + 1);
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 pos = new Vector2(
+                Random.Range(center.x - halfW, center.x + halfW),
+                Random.Range(center.y - halfH, center.y + halfH)
+            );
+            manaObjects.Add(Instantiate(manaPrefab, pos, Quaternion.identity));
+        }
+    }
+
+    private void ClearManaPickups()
+    {
+        foreach (var obj in manaObjects)
+            if (obj) Destroy(obj);
+        manaObjects.Clear();
+    }
+
+    private void ClearMana()
+    {
+        ClearManaPickups();
+        currentMana = 0;
+        OnManaChanged?.Invoke();
+    }
+
+    public void CollectMana()
+    {
+        currentMana++;
+        OnManaChanged?.Invoke();
+        DebugHUD.Log($"Mana! ({currentMana}/{manaRequired})");
+        if (currentMana >= manaRequired)
+        {
+            currentMana = 0;
+            OnManaChanged?.Invoke();
+            TriggerManaSpecial();
+        }
+    }
+
+    private void TriggerManaSpecial()
+    {
+        DebugHUD.Log($"Mana burst! All enemies take {manaSpecialDamage} damage!");
+        foreach (var enemy in spawnedEnemies)
+            if (!enemy.IsDead) enemy.TakeDamage(manaSpecialDamage);
+
+        if (System.Array.TrueForAll(spawnedEnemies, e => e.IsDead))
+            TransitionTo(EncounterState.CheckEnd);
     }
 
     private void OnDestroy()
@@ -98,6 +197,7 @@ public class EncounterManager : MonoBehaviour
         if (spawnedEnemies != null)
             foreach (var e in spawnedEnemies)
                 if (e != null) Destroy(e.gameObject);
+        ClearMana();
     }
 
     // ── Enemy Helpers ──────────────────────────────────────────────
@@ -121,7 +221,7 @@ public class EncounterManager : MonoBehaviour
     // Finds the BallSpawnPoint that GameManager already placed in the scene
     private void RefreshSpawnPoint()
     {
-        if (PendingSpawnPoint != null)
+        if (PendingSpawnPoint)
             ballSpawnPoint = PendingSpawnPoint;
         else
             Debug.LogWarning("[EncounterManager] PendingSpawnPoint not set.");
@@ -129,7 +229,7 @@ public class EncounterManager : MonoBehaviour
 
     private void SpawnBall()
     {
-        if (currentBall != null) Destroy(currentBall);
+        if (currentBall) Destroy(currentBall);
 
         Vector3 pos = ballSpawnPoint != null ? ballSpawnPoint.position : Vector3.zero;
         currentBall    = Instantiate(ballPrefab, pos, Quaternion.identity);
@@ -139,7 +239,7 @@ public class EncounterManager : MonoBehaviour
 
     private void SetShooterEnabled(bool value)
     {
-        if (currentShooter != null) currentShooter.enabled = value;
+        if (currentShooter) currentShooter.enabled = value;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -186,8 +286,9 @@ public class EncounterManager : MonoBehaviour
     {
         if (State != EncounterState.PlayerTurn) return;
 
-        strokesAtShot = StrokesRemaining;
-        StrokesUsed++;
+        parMultiplierAtShot = ParMultiplier;
+        StrokesThisHole++;
+        PlayerStats.Instance.SpendBall();
         TransitionTo(EncounterState.BallRolling);
     }
 
@@ -197,6 +298,10 @@ public class EncounterManager : MonoBehaviour
     public void OnBallHoled()
     {
         if (State != EncounterState.BallRolling) return;
+
+        int refund = Mathf.CeilToInt(StrokesThisHole * ballRefundPercent);
+        PlayerStats.Instance.RestoreBalls(refund);
+
         TransitionTo(EncounterState.PlayerAttack);
     }
 
@@ -205,10 +310,10 @@ public class EncounterManager : MonoBehaviour
     {
         if (State != EncounterState.BallRolling) return;
 
-        if (StrokesRemaining > 0)
+        if (!PlayerStats.Instance.IsOutOfBalls)
             TransitionTo(EncounterState.PlayerTurn);
         else
-            TransitionTo(EncounterState.EnemyTurn);
+            TransitionTo(EncounterState.GameOver);
     }
 
     // Called by GolfBallShooter when ball leaves the camera viewport
@@ -216,17 +321,18 @@ public class EncounterManager : MonoBehaviour
     {
         if (State != EncounterState.BallRolling) return;
 
+        var ps = PlayerStats.Instance;
         const int penalty = 2;
-        StrokesUsed = Mathf.Min(StrokesUsed + penalty, MaxStrokes);
-        DebugHUD.Log($"Out of bounds! -{penalty} strokes. ({StrokesRemaining} remaining)");
+        for (int i = 0; i < penalty; i++) ps.SpendBall();
+        DebugHUD.Log($"Out of bounds! -{penalty} balls. ({ps.currentBalls}/{ps.maxBalls} remaining)");
 
-        if (StrokesRemaining > 0)
+        if (!ps.IsOutOfBalls)
         {
             SpawnBall();
             TransitionTo(EncounterState.PlayerTurn);
         }
         else
-            TransitionTo(EncounterState.EnemyTurn);
+            TransitionTo(EncounterState.GameOver);
     }
 
     // ── PlayerAttack ───────────────────────────────────────────────
@@ -234,12 +340,12 @@ public class EncounterManager : MonoBehaviour
     private IEnumerator PlayerAttackRoutine()
     {
         var   ps         = PlayerStats.Instance;
-        float shotPower  = currentShooter != null ? currentShooter.LastShotPower : 1f;
+        float shotPower  = currentShooter ? currentShooter.LastShotPower : 1f;
         int   rawBase    = Mathf.Max(ps.MinDamage, Mathf.RoundToInt(baseDamage * shotPower));
-        int   multiplier = Mathf.Max(1, strokesAtShot);
-        int   scaled     = rawBase * multiplier;
-        int   bankBonus  = (currentShooter != null && currentShooter.HitObstacle) ? ps.BankShotDamageBonus : 0;
-        int   damage     = scaled + ps.DamageBonus + bankBonus;
+        int   bankBonus  = (currentShooter && currentShooter.HitObstacle) ? ps.BankShotDamageBonus : 0;
+        int   multiplier = parMultiplierAtShot;
+        int   scaled     = (rawBase + bankBonus) * multiplier;
+        int   damage     = scaled + ps.DamageBonus;
 
         LastAttack = new AttackDetail
         {
@@ -250,13 +356,22 @@ public class EncounterManager : MonoBehaviour
             Total         = damage
         };
 
+        int expectedTotal = (rawBase + bankBonus) * multiplier + ps.DamageBonus;
+        if (expectedTotal != damage)
+            Debug.LogError($"[AttackDisplay] Total mismatch! ({rawBase} + {bankBonus}) x {multiplier} + {ps.DamageBonus} = {expectedTotal}, but Total = {damage}");
+
         if (bankBonus > 0) DebugHUD.Log($"Bank shot! +{bankBonus} bonus damage.");
-        DebugHUD.Log($"Player deals {damage} damage.");
-        CurrentEnemy.TakeDamage(damage);
-        AttackDisplay.Instance?.Show(LastAttack);
+
+        if (!CurrentEnemy.IsDead)
+        {
+            DebugHUD.Log($"Player deals {damage} damage.");
+            CurrentEnemy.TakeDamage(damage);
+            AttackDisplay.Instance?.Show(LastAttack);
+        }
 
         yield return new WaitForSeconds(betweenActionsDelay);
-        TransitionTo(EncounterState.EnemyTurn);
+        if (State == EncounterState.PlayerAttack)
+            TransitionTo(EncounterState.EnemyTurn);
     }
 
     // ── EnemyTurn ──────────────────────────────────────────────────
@@ -288,12 +403,15 @@ public class EncounterManager : MonoBehaviour
 
     private void EnterCheckEnd()
     {
+        // Check if all enemies are dead
+        // Loop through array of enemies and return true if every enemy.IsDead
         if (System.Array.TrueForAll(spawnedEnemies, e => e.IsDead))
         {
             TransitionTo(EncounterState.Reward);
             return;
         }
 
+        // Check if player is dead
         if (PlayerStats.Instance.IsDead)
         {
             TransitionTo(EncounterState.GameOver);
@@ -310,12 +428,12 @@ public class EncounterManager : MonoBehaviour
         }
 
         // Advance to next hole
-        StrokesUsed = 0;
+        StrokesThisHole = 0;
+        ClearMana();
         GameManager.Instance.LoadNextLevel();
         RefreshSpawnPoint();
-        MaxStrokes = PendingHole.baseMaxStrokes + PlayerStats.Instance.BonusMaxStrokes;
-        PlayerStats.Instance.ConsumeNextHoleBonusStrokes();
-        Debug.Log($"[EncounterManager] New hole — MaxStrokes={MaxStrokes}");
+        Par = PendingEncounter.par;
+        SpawnMana();
         SpawnBall();
         TransitionTo(EncounterState.PlayerTurn);
     }
@@ -324,6 +442,7 @@ public class EncounterManager : MonoBehaviour
 
     private void EnterReward()
     {
+        SetShooterEnabled(false);
         RewardManager.Instance?.ShowRewards();
     }
 
@@ -332,13 +451,6 @@ public class EncounterManager : MonoBehaviour
     private void EnterGameOver()
     {
         SetShooterEnabled(false);
-        DebugHUD.Log("Game Over. Press R to restart.");
-    }
-
-    private void Update()
-    {
-        if (State != EncounterState.GameOver) return;
-        if (UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame)
-            GameManager.Instance.RestartRun();
+        GameOverScreen.Instance?.Show();
     }
 }

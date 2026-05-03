@@ -6,7 +6,6 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     public PlayerStats PlayerStats { get; private set; }
-    public DebugHUD    DebugHUD    { get; private set; }
 
     [Header("Scene Names")]
     public string encounterSceneName = "Encounter";
@@ -16,12 +15,16 @@ public class GameManager : MonoBehaviour
 
     public ActDefinition CurrentAct       { get; private set; }
     public int           CurrentNodeIndex { get; private set; }
+    
+    // ── Seeding ────────────────────────────────────────────────────
+    
+    public int   Seed       { get; private set; }
+    public int[] RolledPars { get; private set; }
 
     // ── Private ────────────────────────────────────────────────────
 
     private EncounterDefinition currentEncounter;
     private GameObject          currentLevelInstance;
-    private HoleDefinition      currentLevel;
 
     private void Awake()
     {
@@ -37,7 +40,26 @@ public class GameManager : MonoBehaviour
     {
         CurrentAct       = act;
         CurrentNodeIndex = 0;
+        CreateSeed();
+        RollPars();
         LoadMap();
+    }
+
+    public void CreateSeed()
+    {
+        Seed = System.Environment.TickCount;
+        Random.InitState(Seed);
+        DebugHUD.Log("Seed: " + Seed);
+    }
+
+    private void RollPars()
+    {
+        RolledPars = new int[CurrentAct.encounters.Length];
+        for (int i = 0; i < CurrentAct.encounters.Length; i++)
+        {
+            var enc = CurrentAct.encounters[i];
+            RolledPars[i] = Random.Range(enc.parMin, enc.parMax + 1);
+        }
     }
 
     public void RestartRun()
@@ -47,10 +69,10 @@ public class GameManager : MonoBehaviour
         CurrentNodeIndex  = 0;
         currentLevelIndex = -1;
         currentEncounter  = null;
-
+        CreateSeed();
+        RollPars();
         var mapScene = SceneManager.GetSceneByName(mapSceneName);
         if (mapScene.isLoaded) SceneManager.UnloadSceneAsync(mapSceneName);
-
         LoadMap();
     }
 
@@ -94,7 +116,7 @@ public class GameManager : MonoBehaviour
 
     public void UnloadEncounter()
     {
-        if (currentLevelInstance != null)
+        if (currentLevelInstance)
         {
             Destroy(currentLevelInstance);
             currentLevelInstance = null;
@@ -106,9 +128,9 @@ public class GameManager : MonoBehaviour
 
     public void LoadNextLevel()
     {
-        if (currentEncounter == null || currentEncounter.levels == null || currentEncounter.levels.Length == 0)
+        if (CurrentAct == null || CurrentAct.holePool == null || CurrentAct.holePool.Length == 0)
         {
-            Debug.LogWarning("[GameManager] No levels in current encounter.");
+            Debug.LogWarning("[GameManager] No holes in act hole pool.");
             return;
         }
         SpawnLevel(PickNextLevel());
@@ -116,30 +138,28 @@ public class GameManager : MonoBehaviour
 
     private int currentLevelIndex = -1;
 
-    private HoleDefinition PickNextLevel()
+    private GameObject PickNextLevel()
     {
-        var levels = currentEncounter.levels;
-        if (levels.Length == 1) return levels[0];
+        var pool = CurrentAct.holePool;
+        if (pool.Length == 1) return pool[0];
 
         int next;
-        do { next = Random.Range(0, levels.Length); }
+        do { next = Random.Range(0, pool.Length); }
         while (next == currentLevelIndex);
 
         currentLevelIndex = next;
-        return levels[next];
+        return pool[next];
     }
 
-    private void SpawnLevel(HoleDefinition level)
+    private void SpawnLevel(GameObject prefab)
     {
-        if (currentLevelInstance != null)
+        if (currentLevelInstance)
             Destroy(currentLevelInstance);
 
-        currentLevelInstance               = Instantiate(level.levelPrefab, Vector3.zero, Quaternion.identity);
-        currentLevel                       = level;
+        currentLevelInstance               = Instantiate(prefab, Vector3.zero, Quaternion.identity);
         var levelCam = currentLevelInstance.GetComponentInChildren<Camera>();
-        if (levelCam != null)
+        if (levelCam)
             levelCam.rect = new Rect(0, 0, 1, 0.5f);
-        EncounterManager.PendingHole       = level;
         EncounterManager.PendingEncounter  = currentEncounter;
         EncounterManager.PendingSpawnPoint = FindSpawnPoint(currentLevelInstance);
     }

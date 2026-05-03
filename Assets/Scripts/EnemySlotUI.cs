@@ -10,6 +10,7 @@ public class EnemySlotUI : MonoBehaviour
     [SerializeField] float           fadeDuration = 1f;
 
     private Enemy target;
+    public  Enemy BoundEnemy => target;
 
     public void Bind(Enemy enemy)
     {
@@ -28,6 +29,7 @@ public class EnemySlotUI : MonoBehaviour
 
     void Refresh()
     {
+        if (!gameObject.activeInHierarchy) return;
         if (healthBar == null) return;
         healthBar.SetValue(target.CurrentHealth, target.maxHealth);
 

@@ -12,11 +12,13 @@ public class EncounterDefinition : ScriptableObject
 {
     [Header("Display")]
     public string displayName = "Encounter";
+    public int    par         = 5;
 
     [Header("Enemies")]
     [Tooltip("1–3 enemies fought in sequence.")]
     public EnemyData[] enemies = { new EnemyData() };
-
+    
     [Header("Holes")]
-    public HoleDefinition[] levels;
+    public int parMin;
+    public int parMax;
 }

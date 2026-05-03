@@ -21,7 +21,7 @@ public class AttackDisplay : MonoBehaviour
     public void Show(EncounterManager.AttackDetail attack)
     {
         StopAllCoroutines();
-        formulaLabel.text = $"{attack.Base}  x  {(int)attack.Multiplier}";
+        formulaLabel.text = $"{attack.Base + attack.BankShotBonus}  x  {(int)attack.Multiplier}";
         totalLabel.text   = "0";
         gameObject.SetActive(true);
         StartCoroutine(CountUp(attack.Total));

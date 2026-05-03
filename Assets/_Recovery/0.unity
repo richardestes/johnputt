@@ -195,13 +195,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   maxHealth: 100
   currentHealth: 0
-  maxBalls: 50
+  maxBalls: 20
   currentBalls: 0
   powerMultiplier: 1
   minDamage: 3
   damageBonus: 0
   bankShotDamageBonus: 0
-  magnetRadius: 1
 --- !u!114 &1539184645
 MonoBehaviour:
   m_ObjectHideFlags: 0

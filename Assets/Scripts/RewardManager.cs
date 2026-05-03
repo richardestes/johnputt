@@ -6,6 +6,7 @@ public class RewardManager : MonoBehaviour
 
     [SerializeField] private RewardDefinition[] rewardPool;
     [SerializeField] private int rewardChoices = 3;
+    [SerializeField] private RewardDefinition guaranteedReward;
 
     private RewardDefinition[] currentOffers;
     private bool showing = false;
@@ -34,11 +35,25 @@ public class RewardManager : MonoBehaviour
         var pool  = new System.Collections.Generic.List<RewardDefinition>(rewardPool);
         var picks = new RewardDefinition[count];
 
-        for (int i = 0; i < count; i++)
+        if (guaranteedReward != null)
         {
-            int idx   = Random.Range(0, pool.Count);
-            picks[i]  = pool[idx];
-            pool.RemoveAt(idx);
+            picks[0] = guaranteedReward;
+            pool.Remove(guaranteedReward);
+            for (int i = 1; i < count; i++)
+            {
+                int idx = Random.Range(0, pool.Count);
+                picks[i] = pool[idx];
+                pool.RemoveAt(idx);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < count; i++)
+            {
+                int idx   = Random.Range(0, pool.Count);
+                picks[i]  = pool[idx];
+                pool.RemoveAt(idx);
+            }
         }
         return picks;
     }
@@ -87,14 +102,17 @@ switch (reward.type)
             case RewardType.DamageBonus:
                 PlayerStats.Instance.AddDamageBonus(reward.value);
                 break;
-            case RewardType.ExtraStrokes:
-                PlayerStats.Instance.AddBonusMaxStrokes(reward.value);
+            case RewardType.ExtraBalls:
+                PlayerStats.Instance.AddMaxBalls(reward.value);
                 break;
             case RewardType.BankShotBonus:
                 PlayerStats.Instance.AddBankShotBonus(reward.value);
                 break;
             case RewardType.HealPlayer:
                 PlayerStats.Instance.Heal(reward.value);
+                break;
+            case RewardType.MagnetRadius:
+                PlayerStats.Instance.AddMagnetRadius(reward.value);
                 break;
         }
     }
